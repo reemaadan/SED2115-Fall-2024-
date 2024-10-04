@@ -30,7 +30,5 @@ export const fetchUserData = (accessToken) => {
     headers: {
       Authorization: `Bearer ${accessToken}` // Bearer token authorization format
     }
-  })
+  });
 };
-
-
