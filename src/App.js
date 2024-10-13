@@ -4,7 +4,7 @@ import ChartComponent from './chart_component'; // this imports the chart compon
 
 // hooks will be useful to hook into other pieces of data, like the api for a login
 const clientId = 'e2d1da0d23e74e9797ca7ec1f04ee0e8';
-const clientSecret = '906c895f3220431982d7f744804dacae'
+const clientSecret = 'clientSecret'
 
 function App() {
   // State variables to store the access component/token and users data
