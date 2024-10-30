@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react'; // import React and hooks for state and side-effects
 import { getAuthUrl, fetchUserData } from './spotify_service'; // imports the functions from spotify_service.js
 import ChartComponent from './chart_component'; // this imports the chart component that will display the data
+import axios from 'axios';
 
 // hooks will be useful to hook into other pieces of data, like the api for a login
-const clientId = 'e2d1da0d23e74e9797ca7ec1f04ee0e8';
-const clientSecret = 'clientSecret'
+const clientId = '6f0680f2317545fd8d2a7bd3263b4d51';
+const clientSecret = '859ff11f4dd24d9fb92fdebeae39ef2a'
 
 function App() {
   // State variables to store the access component/token and users data
@@ -13,8 +14,22 @@ function App() {
 
   const fill = async () => {
     try {
-      const res = await fetch('https://api.spotify.com/v1/artists/'+ {clientId}  + ':' + {clientSecret}+ '/0TnOYISbd1XYRBk9myaseg ');
-      console.log(res.json)
+      const params = new URLSearchParams();
+      params.append('grant_type', 'client_credentials');
+      params.append('client_id', clientId);
+      params.append('client_secret', clientSecret);
+
+      const response = await axios({
+        method: 'post',
+        url: 'https://accounts.spotify.com/api/token',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        data: params
+      });
+
+     let data = response.data;
+     console.log('data here', data);
      } catch (err) {
        console.log(err)
      }
@@ -47,7 +62,7 @@ function App() {
 
   // create a function to handle user login. redirects to spotify authorization page.
   const handleLogin = () => {
-    window.location.href = getAuthUrl(); // redirects the user to spotify login page to authorize the app
+    window.location.href = getAuthUrl(clientId); // redirects the user to spotify login page to authorize the app
   };
 
   // displays/renders the user interface (graph)
