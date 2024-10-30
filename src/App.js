@@ -1,84 +1,91 @@
-import React, { useState, useEffect } from 'react'; // import React and hooks for state and side-effects
-import { getAuthUrl, fetchUserData } from './spotify_service'; // imports the functions from spotify_service.js
-import ChartComponent from './chart_component'; // this imports the chart component that will display the data
-import axios from 'axios';
+import React, { useState, useEffect } from 'react';
+import ChartComponent from './chart_component';
+import { getAuthUrl, validateToken, fetchUserTopArtists } from './spotify_service';
 
-// hooks will be useful to hook into other pieces of data, like the api for a login
-const clientId = '6f0680f2317545fd8d2a7bd3263b4d51';
-const clientSecret = '859ff11f4dd24d9fb92fdebeae39ef2a'
+const CLIENT_ID = '6f0680f2317545fd8d2a7bd3263b4d51';
 
 function App() {
-  // State variables to store the access component/token and users data
-  const [token, setToken] = useState(null); // 'token' will store the Spotify access token
-  const [userData, setUserData] = useState(null); // 'userData' will store the user's top artist data
+  const [token, setToken] = useState(null);
+  const [userData, setUserData] = useState(null);
+  const [error, setError] = useState(null);
 
-  const fill = async () => {
+  const loadUserData = async (accessToken) => {
+    setError(null);
+    
     try {
-      const params = new URLSearchParams();
-      params.append('grant_type', 'client_credentials');
-      params.append('client_id', clientId);
-      params.append('client_secret', clientSecret);
-
-      const response = await axios({
-        method: 'post',
-        url: 'https://accounts.spotify.com/api/token',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded'
-        },
-        data: params
-      });
-
-     let data = response.data;
-     console.log('data here', data);
-     } catch (err) {
-       console.log(err)
-     }
-  }
-
-  // useEffect (state) for grabbing access token from URL hash when the page loads
-  useEffect(() => {
-    fill()
-    // When Spotify redirects back, the token is part of the URL (after '#')
-    const hash = window.location.hash; // Get everything after the hash ('#') in the URL
-    if (hash) {
-      const params = new URLSearchParams(hash.substring(1)); // breaks down the parameters in the URL
-      const accessToken = params.get('access_token'); // takes the 'access_token' out from the URL
-      setToken(accessToken); // ask why we do this to knox -- maybe its a state thing
-    }
-  }, []); // ensures this runs only once when the component loads
-
-  // useEffect to fetch user data from Spotify API after the token is set
-  useEffect(() => {
-    if (token) {
-      // use token to fetch data from spotify API
-      fetchUserData(token).then((response) => {
-        console.log(response.data) //got  a response, but the response.data seems to be null/empty
-        console.log("i got here")
-        setUserData(response.data); // saves the API response (user's top artists) to a state (stays the same)
-        console.log(response.data)
-      });
-    }
-  }, [token]); // changes when/if token will change
-
-  // create a function to handle user login. redirects to spotify authorization page.
-  const handleLogin = () => {
-    window.location.href = getAuthUrl(clientId); // redirects the user to spotify login page to authorize the app
+      const data = await fetchUserTopArtists(accessToken);
+      setUserData(data);
+    } catch (err) {
+      setError(err.message || 'Failed to load user data');
+      setToken(null); // this is important, for some reason it will remember the old dead tokens so you have to reset it when there is an error
+    } 
   };
 
-  // displays/renders the user interface (graph)
+  useEffect(() => {
+    const getTokenFromUrl = async () => {
+      const hash = window.location.hash;
+      if (!hash) return;
+
+      const params = new URLSearchParams(hash.substring(1));
+      const accessToken = params.get('access_token');
+      
+      if (accessToken) {
+        const isValid = await validateToken(accessToken);
+        if (isValid) {
+          setToken(accessToken);
+        } else {
+          setError('Invalid access token received');
+        }
+      }
+    };
+
+    getTokenFromUrl();
+  }, []);
+
+  useEffect(() => {
+    if (token) {
+      loadUserData(token);
+    }
+  }, [token]);
+
+  const handleLogin = () => {
+    window.location.href = getAuthUrl(CLIENT_ID);
+  };
+
+  if (error) {
+    return (
+      <div className="container mx-auto p-4">
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4">
+          {error}
+        </div>
+        <button 
+          onClick={handleLogin}
+          className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded transition-colors"
+        >
+          Login Again
+        </button>
+      </div>
+    );
+  }
+
   return (
+    <div className="container mx-auto p-4">
+      {!token && (
+        <button 
+          onClick={handleLogin}
+          className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded transition-colors"
+        >
+          Login with Spotify
+        </button>
+      )}
 
-    <div>
-      {/* show login button if the user hasn't logged in */}
-      {!token && <button onClick={handleLogin}>Login with Spotify</button>}
-
-      {/* once we have user data, display the list of top artists */}
       {userData && (
-        <div>
-          <h1> Data Spot</h1>
-          <p>Welcome to Data Spot, where you can see all the data from your fav artists</p>
-          <h2>Your Top Artists</h2>
-          {/* renders the chart_component and pass the userData as a prop */}
+        <div className="mt-8">
+          <h1 className="text-3xl font-bold mb-2">Data Spot</h1>
+          <p className="mb-6">
+            Welcome to Data Spot, where you can see all the data from your favorite artists
+          </p>
+          <h2 className="text-2xl font-semibold mb-4">Your Top Artists</h2>
           <ChartComponent userData={userData} />
         </div>
       )}

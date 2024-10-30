@@ -1,32 +1,75 @@
-import axios from 'axios'; // Import axios to handle HTTP requests
+import axios from 'axios';
 
-// Redirect URI that Spotify will send the user back to after login (must match the one set in Spotify Dashboard)
-const redirectUri = 'http://localhost:3000';
+const REDIRECT_URL = 'http://localhost:3000';
+const SCOPE = 'user-top-read';
+const API_BASE_URL = 'https://api.spotify.com/v1';
 
-// Scopes define the permissions you're requesting from the user. Here, we request access to the user's top artists.
-const scopes = 'user-top-read';
-
-/**
- * Generates the URL where the user will be sent to log in to Spotify and authorize your app.
- * @returns {string} The authorization URL
- */
 export const getAuthUrl = (clientId) => {
-  // Construct the Spotify authorization URL with required parameters like client ID, redirect URI, and scopes
-  return `https://accounts.spotify.com/authorize?client_id=${clientId}&response_type=token&redirect_uri=${redirectUri}&scope=${encodeURIComponent(scopes)}`;
+  const params = new URLSearchParams({
+    client_id: clientId,
+    response_type: 'token',
+    redirect_uri: REDIRECT_URL,
+    scope: SCOPE,
+    show_dialog: true
+  });
+  
+  return `https://accounts.spotify.com/authorize?${params.toString()}`;
 };
 
-/**
- * Fetches the top artists for the logged-in user from the Spotify API using the access token.
- * @param {string} accessToken The Spotify access token obtained after login
- * @returns {Promise} A promise that resolves to the user's top artists
- */
-export const fetchUserData = (accessToken) => {
-  // Make an HTTP GET request to the Spotify API to fetch the user's top artists, including the token in the headers
-  return axios.get('https://api.spotify.com/v1/me/top/artists', {
-    headers: {
-      Authorization: `Bearer ${accessToken}` // Bearer token authorization format
+export const getSpotifyToken = async (clientId, clientSecret) => {
+  try {
+    const params = new URLSearchParams({
+      grant_type: 'client_credentials',
+      client_id: clientId,
+      client_secret: clientSecret
+    });
+
+    const { data } = await axios({
+      method: 'post',
+      url: 'https://accounts.spotify.com/api/token',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      data: params
+    });
+    
+    return data;
+  } catch (error) {
+    console.error('Failed to get Spotify token:', error);
+    throw error;
+  }
+};
+
+export const fetchUserTopArtists = async (accessToken) => {
+  if (!accessToken) {
+    throw new Error('No access token provided');
+  }
+
+  try {
+    const response = await axios.get(`${API_BASE_URL}/me/top/artists`, {
+      headers: { 
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json'
+      },
+      params: {
+        limit: 20,
+        time_range: 'long_term' 
+      }
+    });
+    return response.data;
+  } catch (error) {
+    if (error.response?.status === 401) {
+      throw new Error('Access token expired or invalid. Please log in again.');
     }
-  })
+    throw error;
+  }
 };
 
-
+export const validateToken = async (accessToken) => {
+  try {
+    await axios.get(`${API_BASE_URL}/me`, {
+      headers: { 'Authorization': `Bearer ${accessToken}` }
+    });
+    return true;
+  } catch {
+    return false;
+  }
+};
