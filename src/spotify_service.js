@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const REDIRECT_URL = 'http://localhost:3000';
+const REDIRECT_URI = 'http://localhost:3000';
 const SCOPE = 'user-top-read';
 const API_BASE_URL = 'https://api.spotify.com/v1';
 
@@ -8,7 +8,7 @@ export const getAuthUrl = (clientId) => {
   const params = new URLSearchParams({
     client_id: clientId,
     response_type: 'token',
-    redirect_uri: REDIRECT_UR,
+    redirect_uri: REDIRECT_URI,
     scope: SCOPE,
     show_dialog: true
   });
@@ -51,7 +51,7 @@ export const fetchUserTopArtists = async (accessToken) => {
       },
       params: {
         limit: 20,
-        time_range: 'long_term' 
+        time_range: 'medium_term' 
       }
     });
     return response.data;

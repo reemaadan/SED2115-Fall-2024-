@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import ChartComponent from './chart_component';
 import { getAuthUrl, validateToken, fetchUserTopArtists } from './spotify_service';
+import './App.css';
 
 const CLIENT_ID = '6f0680f2317545fd8d2a7bd3263b4d51';
 
@@ -17,7 +18,7 @@ function App() {
       setUserData(data);
     } catch (err) {
       setError(err.message || 'Failed to load user data');
-      setToken(null); // this is important, for some reason it will remember the old dead tokens so you have to reset it when there is an error
+      setToken(null); // this is important, for some reason it will remember the old dead tokens so you have to reset it when there are new 
     } 
   };
 
