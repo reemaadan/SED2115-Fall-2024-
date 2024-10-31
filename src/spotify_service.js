@@ -8,7 +8,7 @@ export const getAuthUrl = (clientId) => {
   const params = new URLSearchParams({
     client_id: clientId,
     response_type: 'token',
-    redirect_uri: REDIRECT_URL,
+    redirect_uri: REDIRECT_UR,
     scope: SCOPE,
     show_dialog: true
   });
