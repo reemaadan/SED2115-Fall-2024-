@@ -12,7 +12,7 @@ export const getAuthUrl = (clientId) => {
     scope: SCOPE,
     show_dialog: true
   });
-  
+
   return `https://accounts.spotify.com/authorize?${params.toString()}`;
 };
 
@@ -23,14 +23,13 @@ export const getSpotifyToken = async (clientId, clientSecret) => {
       client_id: clientId,
       client_secret: clientSecret
     });
-
     const { data } = await axios({
       method: 'post',
       url: 'https://accounts.spotify.com/api/token',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       data: params
     });
-    
+
     return data;
   } catch (error) {
     console.error('Failed to get Spotify token:', error);
@@ -57,8 +56,35 @@ export const fetchUserTopArtists = async (accessToken) => {
     return response.data;
   } catch (error) {
     if (error.response?.status === 401) {
-      throw new Error('Access token expired or invalid. Please log in again.');
+      // Check if the token is expired
+      const isTokenExpired = await validateToken(accessToken);
+      if (isTokenExpired) {
+        // Refresh the token and retry the request
+        const newToken = await refreshAccessToken(accessToken);
+        return fetchUserTopArtists(newToken);
+      } else {
+        // The token is invalid, not expired
+        throw new Error('Invalid access token. Please log in again.');
+      }
     }
+    throw error;
+  }
+};
+
+export const refreshAccessToken = async (expiredToken) => {
+  try {
+    const { data } = await axios({
+      method: 'post',
+      url: 'https://accounts.spotify.com/api/token',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      data: new URLSearchParams({
+        grant_type: 'refresh_token',
+        refresh_token: expiredToken
+      })
+    });
+    return data.access_token;
+  } catch (error) {
+    console.error('Failed to refresh Spotify token:', error);
     throw error;
   }
 };
@@ -68,8 +94,8 @@ export const validateToken = async (accessToken) => {
     await axios.get(`${API_BASE_URL}/me`, {
       headers: { 'Authorization': `Bearer ${accessToken}` }
     });
-    return true;
-  } catch {
-    return false;
+    return false; // Token is valid
+  } catch (error) {
+    return error.response?.status === 401; // Token is expired
   }
 };
