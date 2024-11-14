@@ -1,105 +1,189 @@
-import React, { useState, useEffect } from 'react';
-import ChartComponent from './components/chart_component';
-import InteractiveArtistRankings from './components/InteractiveArtistRankings';
-import { getAuthUrl, validateToken, fetchUserTopArtists } from './components/auth/spotify_service';
+import axios from 'axios';
 
-const CLIENT_ID = '6f0680f2317545fd8d2a7bd3263b4d51';
+const REDIRECT_URI = 'http://localhost:3000';
+const SCOPE = 'user-top-read user-read-private user-read-email';
+const API_BASE_URL = 'https://api.spotify.com/v1';
 
-function App() {
-  const [token, setToken] = useState(null);
-  const [userData, setUserData] = useState(null);
-  const [error, setError] = useState(null);
-  const [selectedArtist, setSelectedArtist] = useState(null);
+export const getAuthUrl = (clientId) => {
+  const params = new URLSearchParams({
+    client_id: clientId,
+    response_type: 'token',
+    redirect_uri: REDIRECT_URI,
+    scope: SCOPE,
+    show_dialog: true,
+    state: Math.random().toString(36).substring(7)
+  });
+  
+  return `https://accounts.spotify.com/authorize?${params.toString()}`;
+};
 
-  const loadUserData = async (accessToken) => {
-    setError(null);
+export const getSpotifyToken = async (clientId, clientSecret) => {
+  try {
+    const params = new URLSearchParams({
+      grant_type: 'client_credentials',
+      client_id: clientId,
+      client_secret: clientSecret
+    });
+    const { data } = await axios({
+      method: 'post',
+      url: 'https://accounts.spotify.com/api/token',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      data: params
+    });
+    
+    return data;
+  } catch (error) {
+    console.error('Failed to get Spotify token:', error);
+    throw error;
+  }
+};
 
-    try {
-      const data = await fetchUserTopArtists(accessToken);
-      setUserData(data);
-    } catch (err) {
-      setError(err.message || 'Failed to load user data');
-      setToken(null); // this is important, for some reason it will remember the old dead tokens so you have to reset it when there is an error
-    }
-  };
-
-  useEffect(() => {
-    const getTokenFromUrl = async () => {
-      const hash = window.location.hash;
-      if (!hash) return;
-
-      const params = new URLSearchParams(hash.substring(1));
-      const accessToken = params.get('access_token');
-
-      if (accessToken) {
-        const isValid = await validateToken(accessToken);
-        if (isValid) {
-          setToken(accessToken);
-        } else {
-          setError('Invalid access token received');
-        }
-      }
-    };
-
-    getTokenFromUrl();
-  }, []);
-
-  useEffect(() => {
-    if (token) {
-      loadUserData(token);
-    }
-  }, [token]);
-
-  const handleLogin = () => {
-    window.location.href = getAuthUrl(CLIENT_ID);
-  };
-
-  const handleArtistClick = (artistData) => {
-    setSelectedArtist(artistData);
-  };
-
-  if (error) {
-    return (
-      <div className="container mx-auto p-4">
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4">
-          {error}
-        </div>
-        <button
-          onClick={handleLogin}
-          className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded transition-colors"
-        >
-          Login Again
-        </button>
-      </div>
-    );
+export const fetchUserTopArtists = async (accessToken) => {
+  if (!accessToken) {
+    throw new Error('No access token provided');
   }
 
-  return (
-    <div className="container mx-auto p-4">
-      {!token && (
-        <button
-          onClick={handleLogin}
-          className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded transition-colors"
-        >
-          Login with Spotify
-        </button>
-      )}
+  try {
+    const response = await axios.get(`${API_BASE_URL}/me/top/artists`, {
+      headers: { 
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json'
+      },
+      params: {
+        limit: 20,
+        time_range: 'medium_term' 
+      }
+    });
+    return response.data;
+  } catch (error) {
+    if (error.response?.status === 401) {
+      // Token expired, attempt to refresh
+      try {
+        const newToken = await refreshAccessToken(accessToken);
+        if (newToken) {
+          localStorage.setItem('spotify_token', newToken);
+          return fetchUserTopArtists(newToken);
+        }
+      } catch (refreshError) {
+        console.error('Failed to refresh token:', refreshError);
+        localStorage.removeItem('spotify_token');
+        throw new Error('Session expired. Please log in again.');
+      }
+    }
+    if (error.response?.status === 403) {
+      throw new Error('Access forbidden. Please check your permissions.');
+    }
+    console.error('Failed to fetch top artists:', error);
+    throw error;
+  }
+};
 
-      {userData && (
-        <div className="mt-8">
-          <h1 className="text-3xl font-bold mb-2">Data Spot</h1>
-          <p className="mb-6">
-            Welcome to Data Spot, where you can see all the data from your favorite artists
-          </p>
-          <h2 className="text-2xl font-semibold mb-4">Your Top Artists</h2>
-          <ChartComponent userData={userData} onArtistClick={handleArtistClick} />
-          {selectedArtist && (
-            <InteractiveArtistRankings artistId={selectedArtist.id} />
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
+export const refreshAccessToken = async (expiredToken) => {
+  try {
+    const refreshToken = localStorage.getItem('spotify_refresh_token');
+    if (!refreshToken) {
+      throw new Error('No refresh token available');
+    }
 
-export default App;
+    const clientId = process.env.REACT_APP_SPOTIFY_CLIENT_ID;
+    const params = new URLSearchParams({
+      grant_type: 'refresh_token',
+      refresh_token: refreshToken,
+      client_id: clientId
+    });
+
+    const { data } = await axios({
+      method: 'post',
+      url: 'https://accounts.spotify.com/api/token',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      data: params
+    });
+
+    // Store the new refresh token if one is provided
+    if (data.refresh_token) {
+      localStorage.setItem('spotify_refresh_token', data.refresh_token);
+    }
+
+    return data.access_token;
+  } catch (error) {
+    console.error('Failed to refresh token:', error);
+    throw error;
+  }
+};
+
+export const validateToken = async (accessToken) => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/me`, {
+      headers: { 
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    return response.status === 200;
+  } catch (error) {
+    if (error.response?.status === 401) {
+      // Token is expired, attempt to refresh
+      try {
+        const newToken = await refreshAccessToken(accessToken);
+        if (newToken) {
+          localStorage.setItem('spotify_token', newToken);
+          return true;
+        }
+        return false;
+      } catch {
+        return false;
+      }
+    }
+    console.error('Token validation error:', error);
+    return false;
+  }
+};
+
+export const getUserProfile = async (accessToken) => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/me`, {
+      headers: { 
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    return response.data;
+  } catch (error) {
+    if (error.response?.status === 401) {
+      try {
+        const newToken = await refreshAccessToken(accessToken);
+        if (newToken) {
+          return getUserProfile(newToken);
+        }
+      } catch (refreshError) {
+        console.error('Failed to refresh token:', refreshError);
+        throw new Error('Session expired. Please log in again.');
+      }
+    }
+    throw error;
+  }
+};
+
+// Helper function to parse token from URL
+export const getTokenFromUrl = () => {
+  const hash = window.location.hash
+    .substring(1)
+    .split('&')
+    .reduce((initial, item) => {
+      if (item) {
+        const parts = item.split('=');
+        initial[parts[0]] = decodeURIComponent(parts[1]);
+      }
+      return initial;
+    }, {});
+
+  // Clear the hash from the URL
+  window.location.hash = '';
+  
+  return {
+    accessToken: hash.access_token,
+    tokenType: hash.token_type,
+    expiresIn: hash.expires_in,
+    state: hash.state
+  };
+};
