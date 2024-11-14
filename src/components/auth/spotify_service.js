@@ -60,8 +60,7 @@ export const getAuthUrl = (clientId) => {
     response_type: 'token',
     redirect_uri: REDIRECT_URI,
     scope: SCOPE,
-    show_dialog: false,
-    state: Math.random().toString(36).substring(7)
+    show_dialog: true
   });
   
   return `https://accounts.spotify.com/authorize?${params.toString()}`;
@@ -69,10 +68,20 @@ export const getAuthUrl = (clientId) => {
 
 export const validateToken = async (accessToken) => {
   try {
-    const response = await spotifyApi.get('/me', {
-      headers: { Authorization: `Bearer ${accessToken}` }
+    const params = new URLSearchParams({
+      grant_type: 'client_credentials',
+      client_id: clientId,
+      client_secret: clientSecret
     });
-    return response.status === 200;
+
+    const { data } = await axios({
+      method: 'post',
+      url: 'https://accounts.spotify.com/api/token',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      data: params
+    });
+    
+    return data;
   } catch (error) {
     console.error('Token validation error:', error);
     return false;
@@ -89,44 +98,20 @@ export const fetchUserTopArtists = async () => {
     });
     return response.data;
   } catch (error) {
-    console.error('Failed to fetch top artists:', error);
+    if (error.response?.status === 401) {
+      throw new Error('Access token expired or invalid. Please log in again.');
+    }
     throw error;
   }
 };
 
 export const getUserProfile = async () => {
   try {
-    const response = await spotifyApi.get('/me');
-    return response.data;
-  } catch (error) {
-    console.error('Failed to get user profile:', error);
-    throw error;
+    await axios.get(`${API_BASE_URL}/me`, {
+      headers: { 'Authorization': `Bearer ${accessToken}` }
+    });
+    return true;
+  } catch {
+    return false;
   }
 };
-
-// Helper function to parse token from URL
-export const getTokenFromUrl = () => {
-  const hash = window.location.hash
-    .substring(1)
-    .split('&')
-    .reduce((initial, item) => {
-      if (item) {
-        const parts = item.split('=');
-        initial[parts[0]] = decodeURIComponent(parts[1]);
-      }
-      return initial;
-    }, {});
-
-  // Clear the hash from the URL
-  window.location.hash = '';
-  
-  return {
-    accessToken: hash.access_token,
-    tokenType: hash.token_type,
-    expiresIn: hash.expires_in,
-    state: hash.state
-  };
-};
-
-// Export the axios instance for other components to use
-export default spotifyApi;
