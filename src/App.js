@@ -7,8 +7,9 @@ import {
   fetchUserTopArtists,
   getTokenFromUrl,
 } from './components/auth/spotify_service';
+const CLIENT_ID = process.env.REACT_APP_CLIENT_ID;
 
-const CLIENT_ID = '6f0680f2317545fd8d2a7bd3263b4d51';
+console.log(CLIENT_ID);
 
 function App() {
   const [token, setToken] = useState(null);
