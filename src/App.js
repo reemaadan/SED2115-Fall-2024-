@@ -4,9 +4,8 @@ import InteractiveArtistRankings from './components/InteractiveArtistRankings';
 import { 
   getAuthUrl, 
   validateToken, 
-  fetchUserTopArtists, 
+  fetchUserTopArtists,
   getTokenFromUrl,
-  getUserProfile 
 } from './components/auth/spotify_service';
 
 const CLIENT_ID = '6f0680f2317545fd8d2a7bd3263b4d51';
@@ -16,57 +15,39 @@ function App() {
   const [userData, setUserData] = useState(null);
   const [error, setError] = useState(null);
   const [selectedArtist, setSelectedArtist] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [userProfile, setUserProfile] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   const loadUserData = async (accessToken) => {
     setError(null);
-    setLoading(true);
     try {
-      const [topArtistsData, profileData] = await Promise.all([
-        fetchUserTopArtists(accessToken),
-        getUserProfile(accessToken)
-      ]);
-      
-      setUserData(topArtistsData);
-      setUserProfile(profileData);
+      const data = await fetchUserTopArtists(accessToken);
+      setUserData(data);
     } catch (err) {
       setError(err.message || 'Failed to load user data');
-      if (err.message.includes('Session expired') || err.message.includes('invalid')) {
-        localStorage.removeItem('spotify_token');
-        localStorage.removeItem('spotify_refresh_token');
-        setToken(null);
-      }
-    } finally {
-      setLoading(false);
+      setToken(null);
     }
   };
 
   useEffect(() => {
     const initializeAuth = async () => {
-      // First check localStorage
-      const storedToken = localStorage.getItem('spotify_token');
-      if (storedToken) {
-        const isValid = await validateToken(storedToken);
-        if (isValid) {
-          setToken(storedToken);
-          return;
+      try {
+        const accessToken = getTokenFromUrl();
+        if (accessToken) {
+          const isValid = await validateToken(accessToken);
+          if (isValid) {
+            setToken(accessToken);
+          } else {
+            setError('Invalid access token received');
+          }
         }
-      }
-
-      // Then check URL hash
-      const tokenData = getTokenFromUrl();
-      if (tokenData.accessToken) {
-        const isValid = await validateToken(tokenData.accessToken);
-        if (isValid) {
-          localStorage.setItem('spotify_token', tokenData.accessToken);
-          setToken(tokenData.accessToken);
-        } else {
-          setError('Invalid access token received');
-        }
+      } catch (err) {
+        setError('Failed to initialize authentication');
+        console.error('Auth initialization error:', err);
+      } finally {
+        setIsLoading(false);
       }
     };
-
+    
     initializeAuth();
   }, []);
 
@@ -80,25 +61,14 @@ function App() {
     window.location.href = getAuthUrl(CLIENT_ID);
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('spotify_token');
-    localStorage.removeItem('spotify_refresh_token');
-    setToken(null);
-    setUserData(null);
-    setUserProfile(null);
-    setSelectedArtist(null);
-  };
-
   const handleArtistClick = (artistData) => {
     setSelectedArtist(artistData);
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="container mx-auto p-4">
-        <div className="flex items-center justify-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-green-500"></div>
-        </div>
+        <div className="text-center">Loading...</div>
       </div>
     );
   }
@@ -121,44 +91,24 @@ function App() {
 
   return (
     <div className="container mx-auto p-4">
-      {!token ? (
+      {!token && (
         <button
           onClick={handleLogin}
           className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded transition-colors"
         >
           Login with Spotify
         </button>
-      ) : (
+      )}
+      {userData && (
         <div className="mt-8">
-          <div className="flex justify-between items-center mb-8">
-            <div>
-              <h1 className="text-3xl font-bold mb-2">Data Spot</h1>
-              {userProfile && (
-                <p className="text-gray-600">
-                  Welcome, {userProfile.display_name}
-                </p>
-              )}
-            </div>
-            <button
-              onClick={handleLogout}
-              className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded transition-colors"
-            >
-              Logout
-            </button>
-          </div>
-          
+          <h1 className="text-3xl font-bold mb-2">Data Spot</h1>
           <p className="mb-6">
             Welcome to Data Spot, where you can see all the data from your favorite artists
           </p>
-          
-          {userData && (
-            <>
-              <h2 className="text-2xl font-semibold mb-4">Your Top Artists</h2>
-              <ChartComponent userData={userData} onArtistClick={handleArtistClick} />
-              {selectedArtist && (
-                <InteractiveArtistRankings artistId={selectedArtist.id} />
-              )}
-            </>
+          <h2 className="text-2xl font-semibold mb-4">Your Top Artists</h2>
+          <ChartComponent userData={userData} onArtistClick={handleArtistClick} />
+          {selectedArtist && (
+            <InteractiveArtistRankings artistId={selectedArtist.id} />
           )}
         </div>
       )}

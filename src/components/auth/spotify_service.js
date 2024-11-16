@@ -1,58 +1,8 @@
 import axios from 'axios';
 
 const REDIRECT_URI = 'http://localhost:3000';
-const SCOPE = 'user-top-read user-read-private user-read-email';
+const SCOPE = 'user-top-read';
 const API_BASE_URL = 'https://api.spotify.com/v1';
-
-// Create axios instance with default config
-const spotifyApi = axios.create({
-  baseURL: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
-
-// Add request interceptor to handle token
-spotifyApi.interceptors.request.use(
-  async (config) => {
-    const token = localStorage.getItem('spotify_token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
-
-// Add response interceptor to handle token expiry
-spotifyApi.interceptors.response.use(
-  (response) => response,
-  async (error) => {
-    const originalRequest = error.config;
-
-    // If the error is 401 and we haven't retried yet
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
-
-      // Force a new login since we're using implicit grant
-      await handleTokenExpiry();
-      
-      // Redirect to login
-      window.location.href = getAuthUrl(process.env.REACT_APP_SPOTIFY_CLIENT_ID);
-      return Promise.reject(new Error('Session expired. Redirecting to login...'));
-    }
-
-    return Promise.reject(error);
-  }
-);
-
-// Helper function to handle token expiry
-const handleTokenExpiry = async () => {
-  localStorage.removeItem('spotify_token');
-  // You could dispatch a Redux action or update React context here if needed
-};
 
 export const getAuthUrl = (clientId) => {
   const params = new URLSearchParams({
@@ -66,34 +16,41 @@ export const getAuthUrl = (clientId) => {
   return `https://accounts.spotify.com/authorize?${params.toString()}`;
 };
 
-export const validateToken = async (accessToken) => {
-  try {
-    const params = new URLSearchParams({
-      grant_type: 'client_credentials',
-      client_id: clientId,
-      client_secret: clientSecret
-    });
+export const getTokenFromUrl = () => {
+  const hash = window.location.hash;
+  if (!hash) return null;
+  const params = new URLSearchParams(hash.substring(1));
+  return params.get('access_token');
+};
 
-    const { data } = await axios({
-      method: 'post',
-      url: 'https://accounts.spotify.com/api/token',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      data: params
+export const validateToken = async (accessToken) => {
+  if (!accessToken) return false;
+  
+  try {
+    await axios.get(`${API_BASE_URL}/me`, {
+      headers: { 'Authorization': `Bearer ${accessToken}` }
     });
-    
-    return data;
+    return true;
   } catch (error) {
     console.error('Token validation error:', error);
     return false;
   }
 };
 
-export const fetchUserTopArtists = async () => {
+export const fetchUserTopArtists = async (accessToken) => {
+  if (!accessToken) {
+    throw new Error('No access token provided');
+  }
+
   try {
-    const response = await spotifyApi.get('/me/top/artists', {
+    const response = await axios.get(`${API_BASE_URL}/me/top/artists`, {
+      headers: { 
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json'
+      },
       params: {
         limit: 20,
-        time_range: 'medium_term'
+        time_range: 'medium_term' 
       }
     });
     return response.data;
@@ -105,13 +62,20 @@ export const fetchUserTopArtists = async () => {
   }
 };
 
-export const getUserProfile = async () => {
+export const getUserProfile = async (accessToken) => {
+  if (!accessToken) {
+    throw new Error('No access token provided');
+  }
+
   try {
-    await axios.get(`${API_BASE_URL}/me`, {
+    const response = await axios.get(`${API_BASE_URL}/me`, {
       headers: { 'Authorization': `Bearer ${accessToken}` }
     });
-    return true;
-  } catch {
-    return false;
+    return response.data;
+  } catch (error) {
+    if (error.response?.status === 401) {
+      throw new Error('Access token expired or invalid. Please log in again.');
+    }
+    throw error;
   }
 };
