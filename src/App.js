@@ -1,19 +1,21 @@
+// App.js
+
 import React, { useState, useEffect } from 'react';
 import ChartComponent from './components/chart_component';
+import TopTracksList from './components/TopTracksList'; // Import the new component
 import InteractiveArtistRankings from './components/InteractiveArtistRankings';
 import { 
   getAuthUrl, 
   validateToken, 
   fetchUserTopArtists,
+  fetchUserTopTracks,
   getTokenFromUrl,
 } from './components/auth/spotify_service';
 const CLIENT_ID = process.env.REACT_APP_CLIENT_ID;
 
-console.log(CLIENT_ID);
-
 function App() {
   const [token, setToken] = useState(null);
-  const [userData, setUserData] = useState(null);
+  const [userData, setUserData] = useState({ topArtists: null, topTracks: null });
   const [error, setError] = useState(null);
   const [selectedArtist, setSelectedArtist] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -21,8 +23,11 @@ function App() {
   const loadUserData = async (accessToken) => {
     setError(null);
     try {
-      const data = await fetchUserTopArtists(accessToken);
-      setUserData(data);
+      const [artistsData, tracksData] = await Promise.all([
+        fetchUserTopArtists(accessToken),
+        fetchUserTopTracks(accessToken)
+      ]);
+      setUserData({ topArtists: artistsData, topTracks: tracksData });
     } catch (err) {
       setError(err.message || 'Failed to load user data');
       setToken(null);
@@ -66,6 +71,11 @@ function App() {
     setSelectedArtist(artistData);
   };
 
+  const handleTrackClick = (trackData) => {
+    // Implement functionality if needed when a track is clicked
+    console.log('Track clicked:', trackData);
+  };
+
   if (isLoading) {
     return (
       <div className="container mx-auto p-4">
@@ -100,17 +110,30 @@ function App() {
           Login with Spotify
         </button>
       )}
-      {userData && (
+      {userData.topArtists && (
         <div className="mt-8">
           <h1 className="text-3xl font-bold mb-2">Data Spot</h1>
           <p className="mb-6">
-            Welcome to Data Spot, where you can see all the data from your favorite artists
+            Welcome to Data Spot, where you can see all the data from your favorite artists and tracks.
           </p>
           <h2 className="text-2xl font-semibold mb-4">Your Top Artists</h2>
-          <ChartComponent userData={userData} onArtistClick={handleArtistClick} />
+          <ChartComponent 
+            data={userData.topArtists} 
+            onItemClick={handleArtistClick} 
+            type="artist"
+          />
           {selectedArtist && (
             <InteractiveArtistRankings artistId={selectedArtist.id} />
           )}
+        </div>
+      )}
+      {userData.topTracks && (
+        <div className="mt-8">
+          <h2 className="text-2xl font-semibold mb-4">Your Top Tracks</h2>
+          <TopTracksList
+            data={userData.topTracks}
+            onTrackClick={handleTrackClick}
+          />
         </div>
       )}
     </div>

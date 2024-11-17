@@ -1,3 +1,5 @@
+// spotify_service.js
+
 import axios from 'axios';
 
 const REDIRECT_URI = 'http://localhost:3000';
@@ -44,6 +46,32 @@ export const fetchUserTopArtists = async (accessToken) => {
 
   try {
     const response = await axios.get(`${API_BASE_URL}/me/top/artists`, {
+      headers: { 
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json'
+      },
+      params: {
+        limit: 20,
+        time_range: 'medium_term' 
+      }
+    });
+    return response.data;
+  } catch (error) {
+    if (error.response?.status === 401) {
+      throw new Error('Access token expired or invalid. Please log in again.');
+    }
+    throw error;
+  }
+};
+
+// Add this new function
+export const fetchUserTopTracks = async (accessToken) => {
+  if (!accessToken) {
+    throw new Error('No access token provided');
+  }
+
+  try {
+    const response = await axios.get(`${API_BASE_URL}/me/top/tracks`, {
       headers: { 
         'Authorization': `Bearer ${accessToken}`,
         'Content-Type': 'application/json'

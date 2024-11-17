@@ -1,5 +1,7 @@
-import React, { useEffect, useRef } from 'react'; // Import React and required hooks
-import { Bar } from 'react-chartjs-2'; // Import Bar chart from react-chartjs-2
+// chart_component.js
+
+import React, { useEffect, useRef } from 'react';
+import { Bar } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -21,35 +23,49 @@ ChartJS.register(
 );
 
 /**
- * ChartComponent renders a bar chart of the user's top artists and their popularity.
- * @param {object} userData The user data (top artists) fetched from Spotify
+ * ChartComponent renders a bar chart of the user's top artists or tracks.
+ * @param {object} data The user data (top artists or top tracks) fetched from Spotify
+ * @param {function} onItemClick Callback function when an item is clicked
+ * @param {string} type The type of data ('artist' or 'track')
  */
-const ChartComponent = ({ userData }) => {
+const ChartComponent = ({ data, onItemClick, type }) => {
   // Reference for the chart instance
-  console.log(userData)
   const chartRef = useRef(null);
 
-  // Prepare the data for the bar chart
+  // Prepare the labels and data based on the type
+  const labels = data.items.map((item) => {
+    if (type === 'artist') {
+      return item.name;
+    } else if (type === 'track') {
+      return `${item.name} - ${item.artists.map(artist => artist.name).join(', ')}`;
+    }
+    return '';
+  });
+
   const chartData = {
-    // 'labels' are the names of the artists. We map over 'userData.items' to extract the artist names
-    labels: userData.items.map(artist => artist.name),
-    
-    // 'datasets' contains the actual data for the chart (popularity scores of the artists)
+    labels: labels,
     datasets: [
       {
-        label: 'Popularity', // This will be the label for the dataset on the chart
-        data: userData.items.map(artist => artist.popularity), // The popularity data for each artist
-        backgroundColor: 'rgba(75,192,192,0.6)', // Bar colors (light greenish blue)
-        borderWidth: 1 // Width of the bar borders
+        label: 'Popularity',
+        data: data.items.map(item => item.popularity),
+        backgroundColor: 'rgba(75,192,192,0.6)',
+        borderWidth: 1
       }
     ]
   };
-console.log("user data rendered in the chart")
+
   // Options for the chart to define the behavior of axes, grid lines, etc.
   const options = {
+    onClick: (event, elements) => {
+      if (elements.length > 0) {
+        const index = elements[0].index;
+        const selectedItem = data.items[index];
+        onItemClick(selectedItem);
+      }
+    },
     scales: {
       y: {
-        beginAtZero: true // Start the y-axis at zero to make the chart easier to read
+        beginAtZero: true
       }
     }
   };
@@ -60,10 +76,10 @@ console.log("user data rendered in the chart")
 
     return () => {
       if (chart) {
-        chart.destroy(); // Destroy the chart instance before creating a new one
+        chart.destroy();
       }
     };
-  }, [userData]); // Cleanup runs when the component unmounts or userData changes
+  }, [data]);
 
   // Render the Bar chart component from react-chartjs-2, passing 'chartData' and 'options'
   return <Bar ref={chartRef} data={chartData} options={options} />;
