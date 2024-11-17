@@ -1,16 +1,23 @@
 // App.js
-
-import React, { useState, useEffect } from 'react';
-import ChartComponent from './components/chart_component';
-import TopTracksList from './components/TopTracksList'; // Import the new component
-import InteractiveArtistRankings from './components/InteractiveArtistRankings';
-import { 
-  getAuthUrl, 
-  validateToken, 
+import React, { useState, useEffect } from "react";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
+import ChartComponent from "./components/chart_component";
+import TopTracksList from './components/TopTracksList';
+import InteractiveArtistRankings from "./components/InteractiveArtistRankings";
+import SpotifyProfilePage from "./UserProfilePage";
+import {
+  getAuthUrl,
+  validateToken,
   fetchUserTopArtists,
   fetchUserTopTracks,
   getTokenFromUrl,
-} from './components/auth/spotify_service';
+} from "./components/auth/spotify_service";
+
 const CLIENT_ID = process.env.REACT_APP_CLIENT_ID;
 
 function App() {
@@ -29,7 +36,7 @@ function App() {
       ]);
       setUserData({ topArtists: artistsData, topTracks: tracksData });
     } catch (err) {
-      setError(err.message || 'Failed to load user data');
+      setError(err.message || "Failed to load user data");
       setToken(null);
     }
   };
@@ -38,22 +45,36 @@ function App() {
     const initializeAuth = async () => {
       try {
         const accessToken = getTokenFromUrl();
+        console.log("Access Token:", accessToken);
         if (accessToken) {
           const isValid = await validateToken(accessToken);
           if (isValid) {
             setToken(accessToken);
+            // Store token in localStorage for persistence
+            localStorage.setItem("spotify_access_token", accessToken);
           } else {
-            setError('Invalid access token received');
+            setError("Invalid access token received");
+          }
+        } else {
+          // Check localStorage for existing token
+          const storedToken = localStorage.getItem("spotify_access_token");
+          if (storedToken) {
+            const isValid = await validateToken(storedToken);
+            if (isValid) {
+              setToken(storedToken);
+            } else {
+              localStorage.removeItem("spotify_access_token");
+            }
           }
         }
       } catch (err) {
-        setError('Failed to initialize authentication');
-        console.error('Auth initialization error:', err);
+        setError("Failed to initialize authentication");
+        console.error("Auth initialization error:", err);
       } finally {
         setIsLoading(false);
       }
     };
-    
+
     initializeAuth();
   }, []);
 
@@ -74,6 +95,14 @@ function App() {
   const handleTrackClick = (trackData) => {
     // Implement functionality if needed when a track is clicked
     console.log('Track clicked:', trackData);
+  };
+
+  // Protected Route component
+  const ProtectedRoute = ({ children }) => {
+    if (!token) {
+      return <Navigate to="/" replace />;
+    }
+    return children;
   };
 
   if (isLoading) {
@@ -101,43 +130,84 @@ function App() {
   }
 
   return (
-    <div className="container mx-auto p-4">
-      {!token && (
-        <button
-          onClick={handleLogin}
-          className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded transition-colors"
-        >
-          Login with Spotify
-        </button>
-      )}
-      {userData.topArtists && (
-        <div className="mt-8">
-          <h1 className="text-3xl font-bold mb-2">Data Spot</h1>
-          <p className="mb-6">
-            Welcome to Data Spot, where you can see all the data from your favorite artists and tracks.
-          </p>
-          <h2 className="text-2xl font-semibold mb-4">Your Top Artists</h2>
-          <ChartComponent 
-            data={userData.topArtists} 
-            onItemClick={handleArtistClick} 
-            type="artist"
-          />
-          {selectedArtist && (
-            <InteractiveArtistRankings artistId={selectedArtist.id} />
-          )}
-        </div>
-      )}
-      {userData.topTracks && (
-        <div className="mt-8">
-          <h2 className="text-2xl font-semibold mb-4">Your Top Tracks</h2>
-          <TopTracksList
-            data={userData.topTracks}
-            onTrackClick={handleTrackClick}
-          />
-        </div>
-      )}
-    </div>
+    <Router>
+      <Routes>
+        <Route
+          path="/"
+          element={
+            <div className="container mx-auto p-4">
+              {!token && (
+                <button
+                  onClick={handleLogin}
+                  className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded transition-colors"
+                >
+                  Login with Spotify
+                </button>
+              )}
+              {userData.topArtists && (
+                <div className="mt-8">
+                  <div className="flex justify-between items-center mb-6">
+                    <div>
+                      <h1 className="text-3xl font-bold mb-2">Data Spot</h1>
+                      <p className="mb-6">
+                        Welcome to Data Spot, where you can see all the data
+                        from your favorite artists and tracks
+                      </p>
+                    </div>
+                  </div>
+                  <h2 className="text-2xl font-semibold mb-4">
+                    Your Top Artists
+                  </h2>
+
+                  <div className="mb-8">
+                    <div className="bg-white p-6 rounded-lg shadow-lg">
+                      <h3 className="text-xl font-semibold mb-4">
+                        Artist Popularity Chart
+                      </h3>
+                      <ChartComponent 
+                        data={userData.topArtists}
+                        onItemClick={handleArtistClick}
+                        type="artist"
+                      />
+                    </div>
+                  </div>
+
+                  {userData.topTracks && (
+                    <div className="mt-8">
+                      <h2 className="text-2xl font-semibold mb-4">Your Top Tracks</h2>
+                      <TopTracksList
+                        data={userData.topTracks}
+                        onTrackClick={handleTrackClick}
+                      />
+                    </div>
+                  )}
+
+                  {token && (
+                    <button
+                      onClick={() => (window.location.href = "/profile")}
+                      className="bg-gray-800 hover:bg-gray-700 text-white px-6 py-2 rounded-full transition-colors"
+                    >
+                      View Profile
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <SpotifyProfilePage accessToken={token} />
+            </ProtectedRoute>
+          }
+        />
+      </Routes>
+    </Router>
   );
 }
 
 export default App;
+
+ 
