@@ -16,6 +16,7 @@ import {
  fetchUserTopTracks,
  getTokenFromUrl,
 } from "./components/auth/spotify_service";
+import "./styles/LoginPage.css"
 
 const CLIENT_ID = process.env.REACT_APP_CLIENT_ID;
 console.log('Client ID:', process.env.REACT_APP_CLIENT_ID);
