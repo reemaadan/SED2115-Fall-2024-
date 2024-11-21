@@ -60,7 +60,7 @@ export const fetchUserTopArtists = async (accessToken) => {
     if (error.response?.status === 401) {
       throw new Error('Access token expired or invalid. Please log in again.');
     }
-    throw error;
+    throw new Error(`Failed with status ${error.response?.status}: ${error.message}`);
   }
 };
 
