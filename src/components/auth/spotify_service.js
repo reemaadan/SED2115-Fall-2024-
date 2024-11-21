@@ -2,7 +2,7 @@
 
 import axios from 'axios';
 
-const REDIRECT_URI = 'http://localhost:3000';
+const REDIRECT_URI = process.env.REACT_APP_REDIRECT_URI || 'http://localhost:3000';
 const SCOPE = 'user-top-read';
 const API_BASE_URL = 'https://api.spotify.com/v1';
 

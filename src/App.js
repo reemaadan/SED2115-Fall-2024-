@@ -19,7 +19,7 @@ import {
 } from "./components/auth/spotify_service";
 
 const CLIENT_ID = process.env.REACT_APP_CLIENT_ID;
-
+console.log('Client ID:', process.env.REACT_APP_CLIENT_ID);
 function App() {
   const [token, setToken] = useState(null);
   const [userData, setUserData] = useState({ topArtists: null, topTracks: null });
