@@ -138,11 +138,12 @@ function App() {
         <Route
           path="/"
           element={
-            <div className="container">
+            <div className="container mx-auto h-screen flex flex-col items-center justify-center">
+              <h1 className="text-4xl font-bold mb-6">Welcome to DataSpot</h1>
               {!token && (
                 <button
                   onClick={handleLogin}
-                  className="login-button"
+                  className="login-button bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded transition-colors"
                 >
                   Login with Spotify
                 </button>
