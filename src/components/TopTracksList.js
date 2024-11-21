@@ -19,10 +19,9 @@ const TopTracksList = ({ data, onTrackClick }) => {
           >
             <span className="w-10 text-center">{index + 1}</span>
             <img
-              className="w-0 h-0 rounded-md object-cover mr-4"
-              src={track.album.images[0]?.url}
-              alt={track.name}
-            />
+className="w-[50px] h-[50px] rounded-md object-cover mr-4"  src={track.album.images[0]?.url}
+  alt={track.name}
+/>
             <div>
               <p className="text-lg font-medium">{track.name}</p>
               <p className="text-sm text-gray-500">
