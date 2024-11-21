@@ -19,7 +19,7 @@ const TopTracksList = ({ data, onTrackClick }) => {
           >
             <span className="w-10 text-center">{index + 1}</span>
             <img
-className="w-[50px] h-[50px] rounded-md object-cover mr-4"  src={track.album.images[0]?.url}
+className="w-[10px] h-[10px] rounded-md object-cover mr-4"  src={track.album.images[0]?.url}
   alt={track.name}
 />
             <div>
