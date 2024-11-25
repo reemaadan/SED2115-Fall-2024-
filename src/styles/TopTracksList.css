@@ -1,0 +1,56 @@
+/* TopTracksList.css */
+
+.top-tracks-list {
+    width: 100%;
+  }
+  
+  .tracks-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  
+  .track-item {
+    display: flex;
+    align-items: center;
+    padding: 10px 0;
+    cursor: pointer;
+    border-bottom: 1px solid #333;
+  }
+  
+  .track-item:hover {
+    background-color: #222;
+  }
+  
+  .track-index {
+    width: 30px;
+    text-align: center;
+    margin-right: 10px;
+    color: white;
+  }
+  
+  .track-image {
+    width: 50px;
+    height: 50px;
+    border-radius: 5px;
+    object-fit: cover;
+    margin-right: 15px;
+  }
+  
+  .track-info {
+    flex: 1;
+  }
+  
+  .track-name {
+    font-size: 1rem;
+    font-weight: bold;
+    color: white;
+    margin: 0;
+  }
+  
+  .track-artists {
+    font-size: 0.9rem;
+    color: #ccc;
+    margin: 5px 0 0 0;
+  }
+  

@@ -1,0 +1,24 @@
+.chart-container {
+    background-color: black;
+    padding: 0;
+    margin: 0 auto;
+    width: 100%; /* Allow full width */
+    max-width: 100%; /* Remove max-width constraint */
+    transition: box-shadow 0.3s ease;
+  }
+  
+  .chart-container:hover {
+    box-shadow: 0 0 15px 5px green;
+  }
+  
+  .chart-container canvas {
+    display: block;
+    background-color: black !important;
+  }
+  
+  body {
+    background-color: black;
+    margin: 0;
+    padding: 0;
+  }
+  

@@ -1,3 +1,5 @@
+// App.js
+
 import React, { useState, useEffect } from "react";
 import {
   BrowserRouter as Router,
@@ -7,7 +9,6 @@ import {
 } from "react-router-dom";
 import ChartComponent from "./components/chart_component";
 import TopTracksList from './components/TopTracksList';
-import InteractiveArtistRankings from "./components/InteractiveArtistRankings";
 import SpotifyProfilePage from "./UserProfilePage";
 import {
   getAuthUrl,
@@ -16,7 +17,7 @@ import {
   fetchUserTopTracks,
   getTokenFromUrl,
 } from "./components/auth/spotify_service";
-import "./styles/LoginPage.css"
+import "./styles/App.css"; // Ensure this CSS file includes the styles provided earlier
 
 const CLIENT_ID = process.env.REACT_APP_CLIENT_ID;
 console.log('Client ID:', process.env.REACT_APP_CLIENT_ID);
@@ -27,7 +28,9 @@ function App() {
   const [error, setError] = useState(null);
   const [selectedArtist, setSelectedArtist] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('artists'); // New state variable for tabs
 
+  // Function to load user data
   const loadUserData = async (accessToken) => {
     setError(null);
     try {
@@ -42,6 +45,7 @@ function App() {
     }
   };
 
+  // useEffect to initialize authentication
   useEffect(() => {
     const initializeAuth = async () => {
       try {
@@ -77,12 +81,14 @@ function App() {
     initializeAuth();
   }, []);
 
+  // useEffect to load user data when token changes
   useEffect(() => {
     if (token) {
       loadUserData(token);
     }
   }, [token]);
 
+  // Handler functions
   const handleLogin = () => {
     window.location.href = getAuthUrl(CLIENT_ID);
   };
@@ -108,9 +114,10 @@ function App() {
     return children;
   };
 
+  // Loading and error states
   if (isLoading) {
     return (
-      <div className="container">
+      <div className="loading-container">
         <div>Loading...</div>
       </div>
     );
@@ -118,7 +125,7 @@ function App() {
 
   if (error) {
     return (
-      <div className="container">
+      <div className="error-container">
         <div className="error-message">
           {error}
         </div>
@@ -132,80 +139,99 @@ function App() {
     );
   }
 
+  // Main return statement
   return (
     <Router>
       <Routes>
         <Route
           path="/"
           element={
-            <div className="container mx-auto h-screen flex flex-col items-center justify-center">
-              <h1 className="text-4xl font-bold mb-6">Welcome to DataSpot</h1>
-              {!token && (
-                <button
-                  onClick={handleLogin}
-                  className="login-button bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded transition-colors"
-                >
-                  Login with Spotify
-                </button>
-              )}
-              
-              {userData.topArtists && (
-                <div className="content-wrapper">
-                  <div className="header">
-                    <div>
-                      <h1 className="title">Data Spot</h1>
-                      <p className="description">
-                        Welcome to Data Spot, where you can see all the data
-                        from your favorite artists and tracks
-                      </p>
+            <div className="page-container">
+              {/* Header */}
+              <header className="header">
+                <div>
+                  <h1 className="title">DataSpot</h1>
+                  <p className="description">
+                    Welcome to DataSpot, where you can see all the data
+                    from your favorite artists and tracks.
+                  </p>
+                </div>
+                {token && (
+                  <button
+                    onClick={handleLogout}
+                    className="logout-button"
+                  >
+                    Logout
+                  </button>
+                )}
+              </header>
+
+              {/* Main Content */}
+              <div className="content-container">
+                {!token && (
+                  <button
+                    onClick={handleLogin}
+                    className="login-button"
+                  >
+                    Login with Spotify
+                  </button>
+                )}
+
+                {userData.topArtists && userData.topTracks && (
+                  <div className="main-content">
+                    {/* Tabs */}
+                    <div className="tabs">
+                      <button
+                        className={`tab-button ${activeTab === 'artists' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('artists')}
+                      >
+                        Top Artists
+                      </button>
+                      <button
+                        className={`tab-button ${activeTab === 'tracks' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('tracks')}
+                      >
+                        Top Tracks
+                      </button>
                     </div>
+
+                    {/* Conditionally render content based on active tab */}
+                    {activeTab === 'artists' && (
+                      <div className="chart-section">
+                        <h2 className="section-title">Your Top Artists</h2>
+                        <ChartComponent 
+                          data={userData.topArtists}
+                          onItemClick={handleArtistClick}
+                          type="artist"
+                        />
+                      </div>
+                    )}
+
+                    {activeTab === 'tracks' && (
+                      <div className="tracks-section">
+                        <h2 className="section-title">Your Top Tracks</h2>
+                        <TopTracksList
+                          data={userData.topTracks}
+                          onTrackClick={handleTrackClick}
+                        />
+                      </div>
+                    )}
+
                     {token && (
                       <button
-                        onClick={handleLogout}
-                        className="logout-button"
+                        onClick={() => (window.location.href = "/profile")}
+                        className="profile-button"
                       >
-                        Logout
+                        View Profile
                       </button>
                     )}
                   </div>
-
-                  <h2 className="section-title">Your Top Artists</h2>
-
-                  <div className="chart-container">
-                    <div className="chart-wrapper">
-                      <h3 className="chart-title">Artist Popularity Chart</h3>
-                      <ChartComponent 
-                        data={userData.topArtists}
-                        onItemClick={handleArtistClick}
-                        type="artist"
-                      />
-                    </div>
-                  </div>
-
-                  {userData.topTracks && (
-                    <div className="tracks-section">
-                      <h2 className="section-title">Your Top Tracks</h2>
-                      <TopTracksList
-                        data={userData.topTracks}
-                        onTrackClick={handleTrackClick}
-                      />
-                    </div>
-                  )}
-
-                  {token && (
-                    <button
-                      onClick={() => (window.location.href = "/profile")}
-                      className="profile-button"
-                    >
-                      View Profile
-                    </button>
-                  )}
-                </div>
-              )}
+                )}
+              </div>
             </div>
           }
         />
-        
+
         <Route
           path="/profile"
           element={

@@ -1,6 +1,7 @@
 // TopTracksList.js
 
 import React from 'react';
+import '../styles/TopTracksList.css';
 
 /**
  * TopTracksList renders a list of the user's top tracks.
@@ -10,21 +11,22 @@ import React from 'react';
 const TopTracksList = ({ data, onTrackClick }) => {
   return (
     <div className="top-tracks-list">
-      <ul className="divide-y divide-gray-200">
+      <ul className="tracks-list">
         {data.items.map((track, index) => (
           <li
             key={track.id}
-            className="py-4 flex items-center cursor-pointer hover:bg-gray-100"
+            className="track-item"
             onClick={() => onTrackClick(track)}
           >
-            <span className="w-10 text-center">{index + 1}</span>
+            <span className="track-index">{index + 1}</span>
             <img
-className="w-[50px] h-[50px] rounded-md object-cover mr-4"  src={track.album.images[0]?.url}
-  alt={track.name}
-/>
-            <div>
-              <p className="text-lg font-medium">{track.name}</p>
-              <p className="text-sm text-gray-500">
+              className="track-image"
+              src={track.album.images[0]?.url}
+              alt={track.name}
+            />
+            <div className="track-info">
+              <p className="track-name">{track.name}</p>
+              <p className="track-artists">
                 {track.artists.map(artist => artist.name).join(', ')}
               </p>
             </div>
@@ -36,4 +38,3 @@ className="w-[50px] h-[50px] rounded-md object-cover mr-4"  src={track.album.ima
 };
 
 export default TopTracksList;
-

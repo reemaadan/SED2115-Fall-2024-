@@ -1,3 +1,4 @@
+/* Existing styles from your App.css */
 .App {
   text-align: center;
 }
@@ -21,7 +22,7 @@
   align-items: center;
   justify-content: center;
   font-size: calc(10px + 2vmin);
-  color: white;
+  color: greenyellow;
   margin-top: 140px;
   margin-right: 180px;
   margin-bottom: 40px;
@@ -41,3 +42,209 @@
     transform: rotate(360deg);
   }
 }
+
+/* Existing styles from your App.css remain unchanged */
+.header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  background-color: black;
+  position: relative; /* For pseudo-elements positioning */
+  overflow: hidden; /* Prevent overflow outside the header */
+}
+
+.header::before,
+.header::after {
+  content: '';
+  position: absolute;
+  top: 1px; /* Anchor near the top of the header */
+  left: 10px; /* Anchor near the left edge */
+  width: 4px; /* Make the bolts thicker */
+  height: 200px; /* Increase height for larger bolts */
+  background: linear-gradient(to bottom, limegreen, transparent);
+  transform-origin: top left; /* Ensure the rotation starts at the anchor */
+  z-index: 1;
+}
+
+.header::before {
+  transform: rotate(-30deg); /* First lightning bolt angle */
+}
+
+.header::after {
+  transform: rotate(-60deg) translateX(20px); /* Second bolt, shifted slightly */
+}
+
+
+/* Set body background and font styles */
+body {
+  margin: 0;
+  padding: 0;
+  background-color: black;
+  color: white;
+  font-family: Arial, sans-serif;
+}
+
+/* Main container for the page */
+.page-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* Updated header styles */
+.header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px 20px; /* Increased padding for better spacing */
+  background-color: black;
+  position: relative; /* To position the logout button */
+}
+
+.header .title {
+  font-size: 7rem;
+  margin: 0;
+  margin-left: 80px; 
+  font-family: 'Times New Roman', Times, serif;
+  color: green;
+
+}
+
+.header .description {
+  font-size: 1.2rem;
+  margin-top: 10px;
+  text-align: center;
+  font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+  max-width: 600px;
+}
+
+.logout-button {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+}
+
+/* Content container */
+.content-container {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 20px;
+}
+
+/* Center the login button when not logged in */
+.content-container .login-button {
+  margin-top: 50px;
+}
+
+/* Main content area */
+.main-content {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 1200px;
+}
+
+/* Section titles */
+.section-title {
+  font-size: 2rem;
+  margin: 20px 0;
+}
+
+/* Chart and tracks sections */
+.chart-section,
+.tracks-section {
+  margin-bottom: 40px;
+}
+
+/* Chart container */
+.chart-section .chart-container {
+  width: 100%;
+}
+
+/* Button styles */
+.login-button,
+.profile-button {
+  background-color: green;
+  color: rgb(16, 156, 0);
+  border: none;
+  padding: 15px 30px;
+  font-size: 1rem;
+  cursor: pointer;
+  margin-left: 1000;
+}
+
+.login-button:hover,
+.logout-button:hover,
+.profile-button:hover {
+  background-color: darkgreen;
+}
+
+/* Error and loading containers */
+.error-container,
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+/* Error message */
+.error-message {
+  color: red;
+  font-size: 1.2rem;
+  margin-bottom: 20px;
+}
+/* Existing styles from your App.css remain unchanged */
+
+/* Tabs container */
+.tabs {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.tab-button {
+  background-color: #333;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  cursor: pointer;
+  font-size: 1rem;
+  margin: 0 10px;
+  border-radius: 5px;
+}
+
+.tab-button.active,
+.tab-button:hover {
+  background-color: green;
+}
+
+.tab-button:focus {
+  outline: none;
+}
+
+/* Adjust images in TopTracksList */
+.tracks-list img {
+  width: 50px; /* Adjust this value as needed */
+  height: 50px;
+  object-fit: cover;
+  border-radius: 5px;
+  margin-right: 10px;
+}
+
+/* Track item styling */
+.track-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.track-info {
+  flex: 1;
+}
+
