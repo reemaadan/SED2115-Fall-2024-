@@ -1,4 +1,5 @@
 // App.js
+// App.js
 
 import React, { useState, useEffect } from "react";
 import {
@@ -7,6 +8,10 @@ import {
   Route,
   Navigate,
 } from "react-router-dom";
+import introJs from 'intro.js';
+import 'intro.js/introjs.css'; // Import Intro.js styles
+import './styles/App.css'; // Your existing styles
+
 import ChartComponent from "./components/chart_component";
 import TopTracksList from './components/TopTracksList';
 import SpotifyProfilePage from "./UserProfilePage";
@@ -17,7 +22,8 @@ import {
   fetchUserTopTracks,
   getTokenFromUrl,
 } from "./components/auth/spotify_service";
-import "./styles/App.css"; // Ensure this CSS file includes the styles provided earlier
+import { color } from "chart.js/helpers";
+import { toBePartiallyChecked } from "@testing-library/jest-dom/matchers";
 
 const CLIENT_ID = process.env.REACT_APP_CLIENT_ID;
 console.log('Client ID:', process.env.REACT_APP_CLIENT_ID);
@@ -29,6 +35,37 @@ function App() {
   const [selectedArtist, setSelectedArtist] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('artists'); // New state variable for tabs
+
+  const steps = [
+
+    {
+      element: '.tabs',
+      intro: 'Use these tabs to switch between your Top Artists and Top Tracks.',
+      position: 'bottom'
+    },
+    {
+      element: '.chart-section',
+      intro: 'This chart displays how popular your top artists are among other users.',
+      position: 'top'
+    },
+    {
+      element: '.tab-button active',
+      intro: 'This is the list of your Top Tracks.',
+      position: 'top'
+    },
+    {
+    element: '  .profile-button',
+    intro: 'Use this button to log into your profile.',
+    position: 'top'
+  },
+]
+
+  // Function to start the tutorial
+  const startTutorial = () => {
+    introJs()
+      .setOptions({ steps })
+      .start();
+  };
 
   // Function to load user data
   const loadUserData = async (accessToken) => {
@@ -165,6 +202,13 @@ function App() {
                   </button>
                 )}
               </header>
+
+              {/* Start Tutorial Button */}
+              {token && (
+                <button onClick={startTutorial} className="tutorial-button">
+                  Help
+                </button>
+              )}
 
               {/* Main Content */}
               <div className="content-container">

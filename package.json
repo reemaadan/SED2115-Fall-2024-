@@ -11,6 +11,7 @@
     "@testing-library/user-event": "^13.5.0",
     "axios": "^1.7.7",
     "chart.js": "^4.4.6",
+    "intro.js": "^7.2.0",
     "lucide-react": "^0.460.0",
     "node": "^18.20.5",
     "react": "^18.3.1",

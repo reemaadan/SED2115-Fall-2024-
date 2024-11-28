@@ -106,7 +106,7 @@ body {
 .header .title {
   font-size: 7rem;
   margin: 0;
-  margin-left: 80px; 
+  margin-left: 130px; 
   font-family: 'Times New Roman', Times, serif;
   color: green;
 
@@ -118,6 +118,7 @@ body {
   text-align: center;
   font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
   max-width: 600px;
+  margin-left: 65px;
 }
 
 .logout-button {
@@ -126,7 +127,6 @@ body {
   right: 20px;
 }
 
-/* Content container */
 .content-container {
   flex: 1;
   display: flex;
@@ -135,12 +135,10 @@ body {
   padding: 20px;
 }
 
-/* Center the login button when not logged in */
 .content-container .login-button {
   margin-top: 50px;
 }
 
-/* Main content area */
 .main-content {
   display: flex;
   flex-direction: column;
@@ -148,24 +146,20 @@ body {
   max-width: 1200px;
 }
 
-/* Section titles */
 .section-title {
   font-size: 2rem;
   margin: 20px 0;
 }
 
-/* Chart and tracks sections */
 .chart-section,
 .tracks-section {
   margin-bottom: 40px;
 }
 
-/* Chart container */
 .chart-section .chart-container {
   width: 100%;
 }
 
-/* Button styles */
 .login-button,
 .profile-button {
   background-color: green;
@@ -183,7 +177,6 @@ body {
   background-color: darkgreen;
 }
 
-/* Error and loading containers */
 .error-container,
 .loading-container {
   display: flex;
@@ -193,15 +186,12 @@ body {
   height: 100vh;
 }
 
-/* Error message */
 .error-message {
   color: red;
   font-size: 1.2rem;
   margin-bottom: 20px;
 }
-/* Existing styles from your App.css remain unchanged */
 
-/* Tabs container */
 .tabs {
   display: flex;
   justify-content: center;
@@ -228,16 +218,14 @@ body {
   outline: none;
 }
 
-/* Adjust images in TopTracksList */
 .tracks-list img {
-  width: 50px; /* Adjust this value as needed */
+  width: 50px; 
   height: 50px;
   object-fit: cover;
   border-radius: 5px;
   margin-right: 10px;
 }
 
-/* Track item styling */
 .track-item {
   display: flex;
   align-items: center;
@@ -247,4 +235,22 @@ body {
 .track-info {
   flex: 1;
 }
+.tutorial-button {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  font-size: 1rem;
+  cursor: pointer;
+  margin: 20px auto;
+  display: block;
+  border-radius: 5px;
+}
 
+.tutorial-button:hover {
+  background-color: #0056b3;
+}
+
+.introjs-tooltiptext {
+  color: black; /* Replace with your desired text color */
+}
