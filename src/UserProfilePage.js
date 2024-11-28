@@ -1,7 +1,7 @@
 // Import necessary modules and components
 import React, { useEffect, useState } from "react";
 import axios from "axios"; // For making HTTP requests
-import { MoreHorizontal } from "lucide-react"; // Icon (not used in this code)
+import { useNavigate } from "react-router-dom"; // For navigation between routes
 import "./styles/UserProfilePage.css"; // Import custom CSS styles
 
 // Define the SpotifyProfilePage component
@@ -11,6 +11,8 @@ const SpotifyProfilePage = ({ accessToken }) => {
   const [topTracks, setTopTracks] = useState([]); // Stores user's top tracks
   const [error, setError] = useState(null); // Stores any error messages
   const [showAllTracks, setShowAllTracks] = useState(false); // Controls whether to show all tracks or only a few
+
+  const navigate = useNavigate(); // Hook to navigate programmatically
 
   // useEffect hook to fetch data when the component mounts or when accessToken changes
   useEffect(() => {
@@ -85,12 +87,22 @@ const SpotifyProfilePage = ({ accessToken }) => {
     setShowAllTracks((prev) => !prev);
   };
 
+  // Function to navigate back to the previous page
+  const handleBack = () => {
+    navigate(-1); // Navigate back one step in the history stack
+  };
+
   // Determine which tracks to display based on showAllTracks state
   const displayedTracks = showAllTracks ? topTracks : topTracks.slice(0, 4);
 
   // Render the component's UI
   return (
     <div className="spotify-profile">
+      {/* Back Button */}
+      <button className="back-button" onClick={handleBack}>
+        &larr; Back
+      </button>
+
       {/* Profile Header Section */}
       <div className="profile-header">
         <div className="profile-pic-container">
@@ -188,4 +200,3 @@ const SpotifyProfilePage = ({ accessToken }) => {
 
 // Export the SpotifyProfilePage component as the default export
 export default SpotifyProfilePage;
-

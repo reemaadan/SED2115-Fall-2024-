@@ -57,7 +57,7 @@ function App() {
       position: 'top'
     },
     {
-      element: '.tab-button.active', // Corrected selector for the active tab button
+      element: '.tab-button', // Supposed to select top tracks button but it doesn't!!!!!!!!
       intro: 'This is the list of your Top Tracks.',
       position: 'top'
     },
