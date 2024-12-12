@@ -1,21 +1,20 @@
-// chart_component.js
-
-import React, { useEffect, useRef } from 'react';
-import { Bar } from 'react-chartjs-2';
+// Import necessary React hooks and chart components
+import React, { useEffect, useRef } from 'react';  // useEffect for lifecycle management, useRef for keeping references
+import { Bar } from 'react-chartjs-2';  // Bar chart component from Chart.js React wrapper
 import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend
+  Chart as ChartJS,  // Main Chart.js class
+  CategoryScale,     // Required for x-axis categories
+  LinearScale,       // Required for y-axis numeric values
+  BarElement,        // Required for rendering bars
+  Title,            // Required for chart title
+  Tooltip,          // Required for hover tooltips
+  Legend            // Required for chart legend
 } from 'chart.js';
 
-// Import the CSS file
+// Import custom styles
 import '../styles/chart_component.css';
 
-// Register the required components
+// Register Chart.js components - this is required before using any Chart.js features
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -25,17 +24,13 @@ ChartJS.register(
   Legend
 );
 
-/**
- * ChartComponent renders a bar chart of the user's top artists or tracks.
- * @param {object} data The user data (top artists or top tracks) fetched from Spotify
- * @param {function} onItemClick Callback function when an item is clicked
- * @param {string} type The type of data ('artist' or 'track')
- */
+// Main component definition - takes data, click handler, and type as props
 const ChartComponent = ({ data, onItemClick, type }) => {
-  // Reference for the chart instance
-  const chartRef = useRef(null);
+  // Create a reference to store the chart instance - useful for cleanup
+  const chartRef = useRef(null);  // Would log null initially, then the chart instance after rendering
 
-  // Prepare the labels and data based on the type
+  // Create labels for x-axis based on data type
+  // If logged: ['Artist Name 1', 'Artist Name 2'] or ['Track Name 1 - Artist', 'Track Name 2 - Artist']
   const labels = data.items.map((item) => {
     if (type === 'artist') {
       return item.name;
@@ -45,30 +40,33 @@ const ChartComponent = ({ data, onItemClick, type }) => {
     return '';
   });
 
+  // Configure the chart data structure
+  // If logged: { labels: [...], datasets: [{ label: 'Popularity', data: [80, 75, 90...], ... }] }
   const chartData = {
     labels: labels,
     datasets: [
       {
         label: 'Popularity',
-        data: data.items.map(item => item.popularity),
-        backgroundColor: 'rgba(144,238,144,0.6)', // Light green bars
+        data: data.items.map(item => item.popularity),  // Array of popularity scores
+        backgroundColor: 'rgba(144,238,144,0.6)',  // Light green color for bars
         borderWidth: 1
       }
     ]
   };
 
-  // Options for the chart
+  // Chart configuration options
   const options = {
-    responsive: true,
-    maintainAspectRatio: true,
-    aspectRatio: 2, // Adjust as needed
+    responsive: true,  // Chart resizes with container
+    maintainAspectRatio: true,  // Maintain aspect ratio when resizing
+    aspectRatio: 2,  // Width:height ratio
     plugins: {
       legend: {
         labels: {
-          color: 'white'
+          color: 'white'  // Legend text color
         }
       },
       tooltip: {
+        // Tooltip styling
         titleColor: 'white',
         bodyColor: 'white',
         backgroundColor: 'rgba(0,0,0,0.8)',
@@ -78,55 +76,55 @@ const ChartComponent = ({ data, onItemClick, type }) => {
     scales: {
       x: {
         ticks: {
-          color: 'white',
-          autoSkip: false,
-          maxRotation: 45,
-          minRotation: 45
+          color: 'white',  // X-axis label color
+          autoSkip: false,  // Don't skip labels
+          maxRotation: 45,  // Maximum label rotation
+          minRotation: 45   // Minimum label rotation
         },
         grid: {
-          color: 'rgba(255, 255, 255, 0.2)'
+          color: 'rgba(255, 255, 255, 0.2)'  // X-axis grid line color
         }
       },
       y: {
-        beginAtZero: true,
+        beginAtZero: true,  // Start y-axis at 0
         ticks: {
-          color: 'white'
+          color: 'white'  // Y-axis label color
         },
         grid: {
-          color: 'rgba(255, 255, 255, 0.2)'
+          color: 'rgba(255, 255, 255, 0.2)'  // Y-axis grid line color
         }
       }
     },
+    // Click handler for bar elements
     onClick: (event, elements) => {
       if (elements.length > 0) {
-        const index = elements[0].index;
-        const selectedItem = data.items[index];
-        onItemClick(selectedItem);
+        const index = elements[0].index;  // Get clicked bar index
+        const selectedItem = data.items[index];  // Get corresponding data item
+        onItemClick(selectedItem);  // Call parent's click handler
       }
     }
   };
 
-  // Use useEffect to handle chart destruction
+  // Cleanup effect - destroys chart when component unmounts
   useEffect(() => {
     const chart = chartRef.current;
-
     return () => {
       if (chart) {
-        chart.destroy();
+        chart.destroy();  // Prevents memory leaks
       }
     };
-  }, [data]);
+  }, [data]);  // Re-run when data changes
 
-  // Render the Bar chart component
+  // Render the chart inside a container div
   return (
     <div className="chart-container">
       <Bar
-        ref={chartRef}
-        data={chartData}
-        options={options}
+        ref={chartRef}  // Attach the ref
+        data={chartData}  // Pass in the data
+        options={options}  // Pass in the options
       />
     </div>
   );
 };
 
-export default ChartComponent;
+export default ChartComponent;  // Export for use in other components
