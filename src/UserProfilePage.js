@@ -1,145 +1,158 @@
-// Import necessary modules and components
-import React, { useEffect, useState } from "react";
-import axios from "axios"; // For making HTTP requests
-import { useNavigate } from "react-router-dom"; // For navigation between routes
-import "./styles/UserProfilePage.css"; // Import custom CSS styles
+// Importing necessary modules
+import React, { useEffect, useState } from "react"; // React's core hooks: useState for state management, useEffect for lifecycle management
+import axios from "axios"; // Axios is a library for making HTTP requests
+import { useNavigate } from "react-router-dom"; // useNavigate is used to programmatically navigate between routes
+import "./styles/UserProfilePage.css"; // Importing custom CSS for styling this component
 
-// Define the SpotifyProfilePage component
+// SpotifyProfilePage is a React functional component that shows user profile data and top tracks
 const SpotifyProfilePage = ({ accessToken }) => {
-  // State variables to manage component data and behavior
-  const [profileData, setProfileData] = useState(null); // Stores user's profile information
-  const [topTracks, setTopTracks] = useState([]); // Stores user's top tracks
-  const [error, setError] = useState(null); // Stores any error messages
-  const [showAllTracks, setShowAllTracks] = useState(false); // Controls whether to show all tracks or only a few
+  // useState hooks to manage various pieces of state in this component
+  const [profileData, setProfileData] = useState(null); // Stores Spotify user profile details
+  const [topTracks, setTopTracks] = useState([]); // Stores user's top tracks fetched from Spotify
+  const [error, setError] = useState(null); // Stores error messages if API calls fail
+  const [showAllTracks, setShowAllTracks] = useState(false); // Toggles between showing limited or all top tracks
 
-  const navigate = useNavigate(); // Hook to navigate programmatically
+  const navigate = useNavigate(); // Hook for navigating to different pages
 
-  // useEffect hook to fetch data when the component mounts or when accessToken changes
+  // useEffect for fetching data
   useEffect(() => {
-    // If there's no access token, set an error message
+    // If there's no access token (user not logged in), set an error and stop execution
     if (!accessToken) {
       setError("No access token. Please log in again.");
       return;
     }
 
+
     // Asynchronous function to fetch data from the Spotify API
     const fetchData = async () => {
       try {
-        // Fetch user profile data
+        // Fetching user profile data from the Spotify API
         const profileResponse = await axios.get(
-          "https://api.spotify.com/v1/me",
+          "https://api.spotify.com/v1/me", // Spotify API endpoint for user profile
           {
-            headers: { Authorization: `Bearer ${accessToken}` }, // Include the access token in the request headers
+            headers: { Authorization: `Bearer ${accessToken}` }, // Authorization header with the user's access token
           }
         );
 
-        // Fetch user's public playlists count
+        // Fetching user's public playlists information
         const playlistsResponse = await axios.get(
-          "https://api.spotify.com/v1/me/playlists",
+          "https://api.spotify.com/v1/me/playlists", // Spotify API endpoint for user's playlists
           {
-            headers: { Authorization: `Bearer ${accessToken}` },
-            params: { limit: 50 }, // Limit the number of playlists fetched
+            headers: { Authorization: `Bearer ${accessToken}` }, // Authorization 
+            params: { limit: 50 }, // URL query parameters: limit the number of playlists fetched
           }
         );
 
-        // Fetch user's top tracks (up to 50 tracks)
+        // Fetching user's top tracks over the last 4 weeks
         const topTracksResponse = await axios.get(
-          "https://api.spotify.com/v1/me/top/tracks",
+          "https://api.spotify.com/v1/me/top/tracks", // Spotify API endpoint for top tracks
           {
-            headers: { Authorization: `Bearer ${accessToken}` },
-            params: { limit: 50, time_range: "short_term" }, // Get top tracks from the last 4 weeks
+            headers: { Authorization: `Bearer ${accessToken}` }, // Authorization header
+            params: { limit: 50, time_range: "short_term" }, // Query parameters for API: fetch 50 tracks from a short time range
           }
         );
 
-        // Update state with fetched profile data
+        // Updating profile data state with the fetched data
         setProfileData({
           name: profileResponse.data.display_name, // User's display name
-          profilePic: profileResponse.data.images[0]?.url || "", // User's profile picture URL (if available)
-          playlistsCount: playlistsResponse.data.total, // Total number of public playlists
-          following: profileResponse.data.followers.total, // Number of followers
+          profilePic: profileResponse.data.images[0]?.url || "", // User's profile picture URL or empty string if none
+          playlistsCount: playlistsResponse.data.total, // Total number of user's public playlists
+          following: profileResponse.data.followers.total, // Number of Spotify followers
         });
 
-        // Update state with fetched top tracks
+        // Updating top tracks state with the fetched data
         setTopTracks(topTracksResponse.data.items);
       } catch (err) {
-        // Handle errors by logging and setting an error message
+        // If any of the API calls fail, log the error and set an error message
         console.error(err);
         setError("Failed to fetch user data. Please try again.");
       }
     };
 
-    // Call the fetchData function to initiate data fetching
-    fetchData();
-  }, [accessToken]); // Dependency array ensures this runs when accessToken changes
 
-  // If there's an error, display the error message
+
+    fetchData(); // Calling the asynchronous function to fetch data
+  }, [accessToken]); // Dependency array: useEffect runs again if accessToken changes
+
+  // If there's an error, show an error message on the UI
   if (error) {
-    return <div className="error-message">{error}</div>;
+    return <div className="error-message">{error}</div>; // .error-message: CSS class for styling error messages
   }
 
-  // If profile data hasn't been loaded yet, display a loading message
+  // While profile data is being fetched, show a loading message
   if (!profileData) {
-    return <div className="loading-message">Loading...</div>;
+    return <div className="loading-message">Loading...</div>; // .loading-message: CSS class for styling the loading screen
   }
 
-  // Function to toggle between showing all tracks or only the first few
+
+
+
+  // Function to toggle the display of all tracks or just the top 4 tracks
   const handleShowAllTracks = () => {
-    setShowAllTracks((prev) => !prev);
+    setShowAllTracks((prev) => !prev); // Toggles the boolean value of showAllTracks, show alltracks = true, false
   };
 
   // Function to navigate back to the previous page
   const handleBack = () => {
-    navigate(-1); // Navigate back one step in the history stack
+    navigate(-1); // Navigates one step back in the browser's history
   };
 
   // Determine which tracks to display based on showAllTracks state
-  const displayedTracks = showAllTracks ? topTracks : topTracks.slice(0, 4);
+  const displayedTracks = showAllTracks ? topTracks : topTracks.slice(0, 4); // Defaulting to 4 tracks when 'showAllTracks' is false ensures a concise display for users not interested in scrolling through all tracks.
 
-  // Render the component's UI
+
+
+
+
+  // Render the Spotify profile page UI
   return (
-    <div className="spotify-profile">
-      {/* Back Button */}
-      <button className="back-button" onClick={handleBack}>
-        &larr; Back
+    <div className="spotify-profile"> {/* .spotify-profile: CSS class for the main container */}
+      {/* Back button to navigate to the previous page */}
+      <button className="back-button" onClick={handleBack}> {/* .back-button: CSS class for styling the button */}
+        &larr; Back {/* Left arrow to indicate going back */}
       </button>
 
-      {/* Profile Header Section */}
-      <div className="profile-header">
-        <div className="profile-pic-container">
+      {/* Profile header section: displays user's profile picture, name, and stats */}
+      <div className="profile-header"> {/* .profile-header: CSS class for the header section */}
+        <div className="profile-pic-container"> {/* .profile-pic-container: CSS class for profile picture container */}
           {profileData.profilePic ? (
-            // If the user has a profile picture, display it
             <img
-              src={profileData.profilePic}
-              alt={`${profileData.name}'s profile`}
-              className="profile-pic"
+              src={profileData.profilePic} // URL of the profile picture
+              alt={`${profileData.name}'s profile`} // Alt text for accessibility
+              className="profile-pic" // .profile-pic: CSS class for styling the image
             />
           ) : (
-            // If not, display a placeholder icon
-            <div className="profile-pic-placeholder">
+            // Placeholder image if the user doesn't have a profile picture
+            <div className="profile-pic-placeholder"> {/* .profile-pic-placeholder: CSS class for placeholder */}
               <svg
-                className="profile-icon"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
+                className="profile-icon" // .profile-icon: CSS class for the SVG icon
+                viewBox="0 0 24 24" // Dimensions of the SVG icon
+                fill="none" // No fill color
+                stroke="currentColor" // Icon stroke color
               >
-                {/* SVG paths for the placeholder icon */}
                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                <circle cx="12" cy="7" r="4" />
+                <circle cx="12" cy="7" r="4" /> {/* Circle for the user's head in the icon */}
               </svg>
             </div>
           )}
         </div>
-        {/* Display user's name and stats */}
-        <div className="profile-info">
-          <span className="profile-label">Profile</span>
-          <h1 className="profile-name">{profileData.name}</h1>
-          <div className="profile-stats">
-            {/* Show number of public playlists and followers */}
-            {profileData.playlistsCount} Public Playlists •{" "}
-            {profileData.following} Following
+
+        {/* User's name and stats */}
+        <div className="profile-info"> {/* .profile-info: CSS class for styling user info */}
+          <span className="profile-label">Profile</span> {/* .profile-label: CSS class for "Profile" label */}
+          <h1 className="profile-name">{profileData.name}</h1> {/* .profile-name: CSS class for user's display name */}
+          <div className="profile-stats"> {/* .profile-stats: CSS class for user stats */}
+            {profileData.playlistsCount} Public Playlists • {/* Total playlists */}
+            {profileData.following} Following {/* Number of followers */}
           </div>
         </div>
       </div>
+
+
+
+
+// CJS TOP TRACKS
+      
 
       {/* Top Tracks Section */}
       <div className="top-tracks-section">
